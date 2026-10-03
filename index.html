@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IF 공장: 선택의 갈림길</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --py-blue:#3776ab;--py-blue-lit:#5a9fd6;--py-yellow:#ffd343;
+  --neon:#3dffa2;--red:#ff6b5e;--ink:#e6edf3;--ink-dim:#8fa6b8;--ink-faint:#5d7789;
+  --s0:#0b1118;--s1:#111a24;--s2:#17232f;--line:#283c4e;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,"D2Coding","Nanum Gothic Coding",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Nanum Gothic",sans-serif;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--s0);color:var(--ink);font-family:var(--sans);line-height:1.5}
+.plant{max-width:1100px;margin:0 auto;padding:0 14px 40px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:12px 0 10px}
+h1{font-family:var(--mono);font-size:clamp(1rem,3.2vw,1.3rem);font-weight:700}
+h1 em{font-style:normal;color:var(--py-yellow)}
+.modes{margin-left:auto;display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.modes button{background:var(--s1);color:var(--ink-dim);border:0;padding:8px 14px;font:700 .85rem var(--sans);cursor:pointer}
+.modes button+button{border-left:1px solid var(--line)}
+.modes button[aria-pressed="true"]{background:var(--py-yellow);color:#241c05}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.panel{background:var(--s2);border:1px solid var(--line);border-top:2px solid #33495e;border-radius:3px;padding:12px 14px}
+.ptitle{font-size:.8rem;font-weight:700;color:var(--ink-dim);margin-bottom:8px}
+.vars{display:flex;gap:10px;flex-wrap:wrap}
+.vmod{flex:1 1 200px;background:var(--s1);border:1px solid #2d4964;border-left:4px solid var(--py-blue);padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+.vlab{font-family:var(--mono);font-size:.78rem;color:var(--py-blue-lit);font-weight:700}
+.vval{font-family:var(--mono);font-size:1.9rem;font-weight:700;line-height:1;color:#dcecfa}
+.vval small{font-size:.8rem;color:var(--ink-faint);font-weight:400;margin-left:6px}
+.dial{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dial button,.tog{height:32px;min-width:40px;background:#0e1a24;border:1px solid #2d4964;border-radius:2px;color:var(--py-blue-lit);font:700 .95rem var(--mono);cursor:pointer;padding:0 8px}
+.tog[aria-pressed="true"]{color:var(--neon);border-color:#2f7a58}
+.tog[aria-pressed="false"]{color:var(--red);border-color:#7a3a33}
+input[type=range]{flex:1;min-width:100px;accent-color:var(--py-yellow)}
+svg{display:block;width:100%;height:auto}
+.edge{fill:none;stroke:#2b4458;stroke-width:4;stroke-linecap:square}
+.trail{fill:none;stroke:var(--neon);stroke-width:4;stroke-linejoin:round}
+.gate polygon{fill:#152434;stroke:var(--py-yellow);stroke-width:2}
+.gate text,.box text{font-family:var(--mono);font-size:12.5px;fill:var(--ink);text-anchor:middle;dominant-baseline:middle;font-weight:700}
+.gate.t polygon{fill:#0f2a20;stroke:var(--neon)}
+.gate.f polygon{fill:#2a1512;stroke:var(--red)}
+.box rect{fill:#101b25;stroke:#3a566f;stroke-width:1.5}
+.box.on rect{fill:#0f2a20;stroke:var(--neon);stroke-width:2.5}
+.box.on text{fill:var(--neon)}
+.blk{fill:none;stroke:var(--py-blue);stroke-width:1.3;stroke-dasharray:6 5}
+.lbl{font-family:var(--sans);font-size:11px;fill:var(--ink-faint)}
+.tf{font-family:var(--mono);font-size:11px;font-weight:700}
+.tf.y{fill:#3fbf86}.tf.n{fill:#c9655b}
+.ball{fill:var(--py-yellow);stroke:#241c05;stroke-width:2}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.76rem;color:var(--ink-faint);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:5px}
+.code{background:#04090d;border:1px solid #1d3243;border-radius:2px;font-family:var(--mono);font-size:clamp(.82rem,2.6vw,.95rem);padding:8px 0;overflow-x:auto}
+.ln{display:flex;white-space:pre;padding:1px 10px 1px 0;border-left:4px solid transparent;color:#9fb6c8}
+.ln .no{width:2.4em;text-align:right;color:#33566c;margin-right:12px;flex:none}
+.ln.ran{color:#cfe0ee}
+.ln.ran .no{color:var(--neon)}
+.ln.now{background:#2a2612;border-left-color:var(--py-yellow);color:#fff}
+.k{color:#ff9e64}.s{color:#9fd88a}.n{color:var(--py-yellow)}.v{color:var(--py-blue-lit)}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.btn{border:1px solid var(--line);background:#16232f;color:var(--ink);font:700 .86rem var(--sans);padding:9px 14px;border-radius:2px;cursor:pointer}
+.btn:hover{background:#1f303f}
+.btn.go{background:var(--py-yellow);border-color:var(--py-yellow);color:#241c05}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.speed{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--ink-dim);margin-top:10px}
+.console{margin-top:12px;background:#04090d;border:1px solid #1d3243;font-family:var(--mono);padding:8px 12px;min-height:58px;font-size:.92rem}
+.console .p{color:var(--neon)}
+.console .idle{color:#3d5a6e;font-size:.82rem}
+.log{margin-top:12px;font-size:.85rem;color:var(--ink-dim);list-style:none;counter-reset:s;max-height:220px;overflow-y:auto}
+.log li{counter-increment:s;padding:4px 0 4px 2.2em;position:relative;border-bottom:1px solid #1b2a37}
+.log li::before{content:counter(s);position:absolute;left:0;width:1.6em;text-align:right;font-family:var(--mono);color:#42586a}
+.log li.idle::before{content:""}
+.log code{font-family:var(--mono);color:var(--py-yellow)}
+.log .y{color:var(--neon);font-weight:700}.log .no{color:var(--red);font-weight:700}
+</style>
+</head>
+<body>
+<div class="plant">
+<header>
+  <h1>IF 공장: <em>선택의 갈림길</em></h1>
+  <div class="modes" role="group" aria-label="시나리오 고르기">
+    <button type="button" data-sc="dust" aria-pressed="true">미세먼지 경보 · if-elif-else</button>
+    <button type="button" data-sc="park" aria-pressed="false">놀이공원 · 중첩 if</button>
+  </div>
+</header>
+<div class="layout">
+  <div>
+    <section class="panel" aria-label="변수 설정">
+      <div class="ptitle">변수 설정 <span style="font-weight:400">— 값을 바꾸면 공이 출발점으로 돌아갑니다</span></div>
+      <div class="vars" id="vars"></div>
+    </section>
+    <section class="panel rail" aria-label="실행 경로 레일">
+      <svg id="svg" role="img" aria-label="조건문 흐름 레일"></svg>
+      <div class="legend">
+        <span><i style="background:#152434;border:2px solid var(--py-yellow);transform:rotate(45deg)"></i>조건 판정</span>
+        <span><i style="border:1.5px dashed var(--py-blue)"></i>들여쓰기 블록</span>
+        <span><i style="background:var(--neon)"></i>실행 경로</span>
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="panel" aria-label="파이썬 코드">
+      <div class="ptitle">파이썬 코드 <span style="font-weight:400">— 노란 줄이 지금 실행 중인 줄</span></div>
+      <div class="code" id="code"></div>
+      <div class="ctrl">
+        <button type="button" class="btn go" id="run">▶ 끝까지 실행</button>
+        <button type="button" class="btn" id="step">한 단계 실행</button>
+        <button type="button" class="btn" id="reset">처음으로</button>
+      </div>
+      <label class="speed">느리게 <input type="range" id="speed" min="1" max="5" value="2" aria-label="공 속도"> 빠르게</label>
+      <div class="console" id="console" aria-live="polite"></div>
+    </section>
+    <section class="panel" style="margin-top:14px" aria-label="실행 경로 기록">
+      <div class="ptitle">실행 경로 기록</div>
+      <ol class="log" id="log" aria-live="polite"></ol>
+    </section>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+var $=function(id){return document.getElementById(id)};
+var V={dust:85,age:15,member:true};
+var mode="dust";
+var SC={
+ dust:{
+  vb:"0 0 430 500",
+  code:function(){return [
+   '<span class="v">dust</span> = <span class="n">'+V.dust+'</span>',
+   '<span class="k">if</span> <span class="v">dust</span> &lt;= <span class="n">30</span>:',
+   '    print(<span class="s">"좋음"</span>)',
+   '<span class="k">elif</span> <span class="v">dust</span> &lt;= <span class="n">80</span>:',
+   '    print(<span class="s">"보통"</span>)',
+   '<span class="k">elif</span> <span class="v">dust</span> &lt;= <span class="n">150</span>:',
+   '    print(<span class="s">"나쁨"</span>)',
+   '<span class="k">else</span>:',
+   '    print(<span class="s">"매우 나쁨"</span>)',
+   'print(<span class="s">"판정 끝"</span>)']},
+  draw:function(g){
+   edge(g,[[80,30],[80,470],[395,470]]);
+   [100,190,280].forEach(function(y){edge(g,[[80,y],[395,y]]);});
+   edge(g,[[395,100],[395,470]]);
+   [100,190,280].forEach(function(y){tf(g,150,y-8,"True","y");tf(g,88,y+46,"False","n");});
+   blk(g,222,62,136,262,"들여쓰기 블록");
+   ["dust <= 30","dust <= 80","dust <= 150"].forEach(function(t,i){gate(g,"g"+i,80,[100,190,280][i],t);});
+   ["좋음","보통","나쁨"].forEach(function(t,i){box(g,"o"+i,290,[100,190,280][i],t);});
+   box(g,"o3",80,380,"매우 나쁨");
+   box(g,"end",230,470,"판정 끝");
+   start(g,80,30,"dust = "+V.dust);
+  },
+  build:function(){
+   var d=V.dust,lim=[30,80,150],gy=[100,190,280],names=["좋음","보통","나쁨"],S=[];
+   S.push({pts:[[80,30]],line:1,msg:'<code>dust = '+d+'</code> 저장'});
+   for(var i=0;i<3;i++){
+    var ok=d<=lim[i];
+    S.push({pts:[[80,gy[i]]],line:2+2*i,gate:"g"+i,res:ok,msg:'조건 판정 <code>'+d+' &lt;= '+lim[i]+'</code> → '+(ok?'<span class="y">True</span>':'<span class="no">False</span>')});
+    if(ok){
+     S.push({pts:[[290,gy[i]]],line:3+2*i,fire:"o"+i,out:names[i],msg:'블록 실행: <code>print("'+names[i]+'")</code>'});
+     S.push({pts:[[395,gy[i]],[395,470],[230,470]],line:10,fire:"end",out:"판정 끝",msg:'if문 종료'});
+     return S;}
+   }
+   S.push({pts:[[80,380]],line:8,msg:'모두 False → <code>else</code>'});
+   S.push({pts:[[80,380]],line:9,fire:"o3",out:"매우 나쁨",msg:'블록 실행'});
+   S.push({pts:[[80,470],[230,470]],line:10,fire:"end",out:"판정 끝",msg:'if문 종료'});
+   return S;
+  }
+ },
+ park:{
+  vb:"0 0 440 470",
+  code:function(){return [
+   '<span class="v">age</span> = <span class="n">'+V.age+'</span>',
+   '<span class="v">member</span> = <span class="n">'+(V.member?"True":"False")+'</span>',
+   '<span class="k">if</span> <span class="v">age</span> &gt;= <span class="n">13</span>:',
+   '    <span class="k">if</span> <span class="v">member</span>:',
+   '        print(<span class="s">"50% 할인"</span>)',
+   '    <span class="k">else</span>:',
+   '        print(<span class="s">"정가"</span>)',
+   '<span class="k">else</span>:',
+   '    print(<span class="s">"무료"</span>)',
+   'print(<span class="s">"입장 완료"</span>)']},
+  draw:function(g){
+   edge(g,[[90,30],[90,400],[370,400]]);
+   edge(g,[[90,100],[250,100],[250,400]]);
+   edge(g,[[250,190],[370,190],[370,400]]);
+   edge(g,[[230,400],[230,435]]);
+   blk(g,186,146,248,186,"안쪽 들여쓰기");
+   tf(g,160,92,"True","y");tf(g,98,146,"False","n");
+   tf(g,258,236,"True","y");tf(g,318,182,"False","n");
+   gate(g,"g0",90,100,"age >= 13");
+   gate(g,"g1",250,190,"member");
+   box(g,"o0",250,290,"50% 할인");
+   box(g,"o1",370,290,"정가");
+   box(g,"o2",90,290,"무료");
+   box(g,"end",230,435,"입장 완료");
+   start(g,90,30,"age="+V.age);
+  },
+  build:function(){
+   var a=V.age,m=V.member,S=[],M=m?"True":"False";
+   S.push({pts:[[90,30]],line:1,msg:'<code>age = '+a+'</code>'});
+   S.push({pts:[[90,30]],line:2,msg:'<code>member = '+M+'</code>'});
+   var ok=a>=13,x;
+   S.push({pts:[[90,100]],line:3,gate:"g0",res:ok,msg:'판정 <code>'+a+' &gt;= 13</code>'});
+   if(ok){
+    S.push({pts:[[250,100],[250,190]],line:4,gate:"g1",res:m,msg:'안쪽 판정 <code>'+M+'</code>'});
+    if(m){S.push({pts:[[250,290]],line:5,fire:"o0",out:"50% 할인",msg:'할인 적용'});x=250;}
+    else{S.push({pts:[[370,290]],line:7,fire:"o1",out:"정가",msg:'정가 적용'});x=370;}
+   }else{
+    S.push({pts:[[90,290]],line:9,fire:"o2",out:"무료",msg:'어린이 무료'});x=90;
+   }
+   S.push({pts:[[x,400],[230,400],[230,435]],line:10,fire:"end",out:"입장 완료",msg:'종료'});
+   return S;
+  }
+ }
+};
+function mk(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function pts(l){return l.map(function(p){return p.join(",")}).join(" ");}
+function edge(g,l){mk("polyline",{"class":"edge",points:pts(l)},g);}
+function tf(g,x,y,t,c){mk("text",{"class":"tf "+c,x:x,y:y},g).textContent=t;}
+function blk(g,x,y,w,h,t){mk("rect",{"class":"blk",x:x,y:y,width:w,height:h,rx:3},g);if(t)mk("text",{"class":"lbl",x:x+6,y:y+h-6},g).textContent=t;}
+function gate(g,id,x,y,t){var G=mk("g",{"class":"gate",id:id},g);mk("polygon",{points:pts([[x,y-32],[x+64,y],[x,y+32],[x-64,y]])},G);mk("text",{x:x,y:y},G).textContent=t;}
+function box(g,id,x,y,t){var G=mk("g",{"class":"box",id:id},g);mk("rect",{x:x-56,y:y-17,width:112,height:34,rx:2},G);mk("text",{x:x,y:y},G).textContent=t;}
+function start(g,x,y,t){mk("rect",{x:x-6,y:y-6,width:12,height:12,fill:"#2b4458"},g);}
+var svg=$("svg"),trailEl,ballEl,steps,si,pos,trail,queue,moving,auto,timer,raf,last;
+function speedPx(){return [0,50,110,190,300,460][+$("speed").value];}
+function dwell(){return [0,1500,1000,650,400,220][+$("speed").value];}
+function reset(){
+ cancelAnimationFrame(raf);clearTimeout(timer);moving=false;auto=false;
+ var sc=SC[mode]; svg.innerHTML="";svg.setAttribute("viewBox",sc.vb); sc.draw(svg);
+ steps=sc.build();si=0;pos=steps[0].pts[0].slice();trail=[pos.slice()];
+ trailEl=mk("polyline",{"class":"trail",points:pts(trail)},svg);
+ ballEl=mk("circle",{"class":"ball",r:9,cx:pos[0],cy:pos[1]},svg);
+ $("code").innerHTML=sc.code().map(function(h,i){return '<\div class="ln" data-l="'+(i+1)+'"><span class="no">'+(i+1)+'</span>'+h+'</div>';}).join("");
+ $("console").innerHTML='<span class="idle">출력 화면</span>'; $("log").innerHTML=''; ui();
+}
+function ui(){
+ var done=si>=steps.length; $("run").disabled=done||auto; $("step").disabled=done;
+}
+function advance(){
+ if(moving||si>=steps.length)return; queue=steps[si].pts.slice();moving=true;last=null;
+ raf=requestAnimationFrame(tick);
+}
+function tick(t){
+ if(last===null)last=t; var budget=speedPx()*Math.min(.05,(t-last)/1000);last=t;
+ while(budget>0&&queue.length){
+  var q=queue[0],dx=q[0]-pos[0],dy=q[1]-pos[1],d=Math.hypot(dx,dy);
+  if(d<=budget){pos=q.slice();trail.push(q.slice());queue.shift();budget-=d;}
+  else{pos[0]+=dx/d*budget;pos[1]+=dy/d*budget;budget=0;}
+ }
+ ballEl.setAttribute("cx",pos[0]);ballEl.setAttribute("cy",pos[1]);
+ trailEl.setAttribute("points",pts(trail.concat([pos])));
+ if(queue.length)raf=requestAnimationFrame(tick);else arrive();
+}
+function arrive(){
+ var st=steps[si];moving=false;
+ $("code").querySelectorAll(".ln").forEach(function(l){l.classList.remove("now")});
+ var L=$("code").querySelectorAll(".ln")[st.line-1]; if(L)L.classList.add("now","ran");
+ if(st.gate)$(st.gate).classList.add(st.res?"t":"f");
+ if(st.fire)$(st.fire).classList.add("on");
+ if(st.out){if($("console").querySelector(".idle"))$("console").innerHTML="";
+   var d=document.createElement("div");d.className="p";d.textContent=st.out;$("console").appendChild(d);}
+ var li=document.createElement("li");li.innerHTML='<code>'+st.line+'줄</code>: '+st.msg;$("log").appendChild(li);
+ si++; if(si<steps.length&&auto)timer=setTimeout(advance,dwell()); ui();
+}
+$("run").onclick=function(){auto=true;ui();advance();};
+$("step").onclick=function(){auto=false;ui();advance();};
+$("reset").onclick=reset;
+function paintVars(){
+ var h; if(mode==="dust") h='<div class="vmod"><span class="vlab">dust</span><span class="vval">'+V.dust+'</span><div class="dial"><input type="range" id="dustR" min="0" max="200" value="'+V.dust+'"></div></div>';
+ else h='<div class="vmod"><span class="vlab">age</span><span class="vval">'+V.age+'</span><div class="dial"><button type="button" id="ageM">−</button><button type="button" id="ageP">+</button></div></div><div class="vmod"><span class="vlab">member</span><span class="vval">'+(V.member?"True":"False")+'</span><div class="dial"><button type="button" class="tog" id="memT" aria-pressed="'+V.member+'">변경</button></div></div>';
+ $("vars").innerHTML=h;
+}
+$("vars").onclick=function(e){
+ if(e.target.id==="ageM")V.age=Math.max(5,V.age-1);
+ else if(e.target.id==="ageP")V.age=Math.min(50,V.age+1);
+ else if(e.target.id==="memT")V.member=!V.member;
+ else return; paintVars();reset();
+};
+$("vars").oninput=function(e){if(e.target.id==="dustR"){V.dust=+e.target.value;paintVars();reset();}};
+document.querySelectorAll(".modes button").forEach(function(b){
+ b.onclick=function(){mode=b.dataset.sc;document.querySelectorAll(".modes button").forEach(function(x){x.setAttribute("aria-pressed",x===b)});paintVars();reset();};
+});
+paintVars();reset();
+})();
+</script>
+</body>
+</html>
